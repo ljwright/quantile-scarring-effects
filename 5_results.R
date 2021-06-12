@@ -225,8 +225,8 @@ make_plot <- function(df, var, palette, ylab, file_name, hline = TRUE){
     theme_minimal() +
     theme(legend.position = c(.15, .85))
   
-  glue("Images/{file_name}.png") %>%
-    ggsave(plot = p, height = 9.9,
+  glue("Images/{file_name}.tiff") %>%
+    ggsave(plot = p, height = 9.9, compression = "lzw",
            width = 21, units = "cm", dpi = 600)
   
   p
@@ -266,7 +266,8 @@ qreg_coefs %>%
   labs(color = "Months Unemployment",
        fill = "Months Unemployment",
        linetype = "Months Unemployment")
-ggsave("Images/quantile_unem.png", height = 9.9, 
+ggsave("Images/quantile_unem.tiff", height = 9.9, 
+       compression = "lzw",
        width = 21, units = "cm", dpi = 600)
 
 qreg_pred %>%
@@ -276,7 +277,9 @@ qreg_pred %>%
             "Predicted GHQ Score",
             "quantile_pred", FALSE) +
   scale_y_continuous(breaks = c(4, 8, 12, 16, 20, 24))
-
+ggsave("Images/quantile_pred.tiff", height = 9.9, 
+       compression = "lzw",
+       width = 21, units = "cm", dpi = 600)
 
 
 # Tables
@@ -329,7 +332,7 @@ qreg_tbl$short <- function(sample){
                     male = "(5)", female = "(6)")) %>%
     border(i = 1:9, border.top = fp_border(color = "grey90"))
 }
-map(c("cc", "mi"), qreg_tbl$short)
+walk(c("cc", "mi"), qreg_tbl$short)
 
 # Long Table
 qreg_tbl$long <- function(sample, sex, mod){
@@ -361,7 +364,7 @@ qreg_coefs %>%
 rm(qreg_obs, qreg_coefs, qreg_res, qreg_tbl,
    qreg_pred, mod_names, make_plot, make_table)
 
-# 5. Specification Curve Analysis ---
+# 5. Specification Curve Analysis ----
 # Load Data
 load("Data/sca_results.Rdata")
 
@@ -385,7 +388,8 @@ sca_plot <- ggplot(sca_res) +
   labs(x = "Quantile", y = "Marginal Effect", color = NULL) +
   theme_minimal() +
   theme(legend.position = c(.15, .85))
-ggsave("Images/quantile_sca.png", plot = sca_plot, 
+ggsave("Images/quantile_sca.tiff", plot = sca_plot, 
+       compression = "lzw",
        height = 9.9,  width = 21, units = "cm", dpi = 300)
 
 ggplot(sca_res) +
@@ -402,7 +406,8 @@ ggplot(sca_res) +
   theme_minimal() +
   theme(legend.position = c(.15, .85),
         strip.text = element_blank())
-ggsave("Images/sca_boxplot.png", height = 9.9,
+ggsave("Images/sca_boxplot.tiff", height = 9.9,
+       compression = "lzw",
        width = 21, units = "cm", dpi = 300)
 
 imp_long %>%
@@ -410,3 +415,23 @@ imp_long %>%
   summarise(sd = wtd.var(GHQ_W8_Likert, Survey_Weight_W8) %>%
               sqrt())
 0.75/6.41
+
+
+# 6. Rename Files
+file.copy("Tables/descriptive_statistics.docx", "Paper/table_1.docx", overwrite = TRUE)
+file.copy("Tables/quantile_main_mi.docx", "Paper/table_2.docx", overwrite = TRUE)
+
+file.copy("Images/quantile_margin.tiff", "Paper/figure_1.tiff", overwrite = TRUE)
+file.copy("Images/quantile_pred.tiff", "Paper/figure_2.tiff", overwrite = TRUE)
+file.copy("Images/quantile_gender.tiff", "Paper/figure_3.tiff", overwrite = TRUE)
+file.copy("Images/quantile_sca.tiff", "Paper/figure_4.tiff", overwrite = TRUE)
+
+file.copy("Tables/quantile_full_mi_all_bivar.docx", "Paper/table_s2.docx", overwrite = TRUE)
+file.copy("Tables/quantile_full_mi_all_mh.docx", "Paper/table_s3.docx", overwrite = TRUE)
+file.copy("Tables/quantile_full_mi_all_full.docx", "Paper/table_s4.docx", overwrite = TRUE)
+file.copy("Tables/quantile_full_mi_all_scar.docx", "Paper/table_s5.docx", overwrite = TRUE)
+file.copy("Tables/quantile_full_mi_male_gender.docx", "Paper/table_s6.docx", overwrite = TRUE)
+file.copy("Tables/quantile_full_mi_female_gender.docx", "Paper/table_s7.docx", overwrite = TRUE)
+
+file.copy("Images/quantile_sep.tiff", "Paper/figure_s2.tiff", overwrite = TRUE)
+file.copy("Images/quantile_unem.tiff", "Paper/figure_s3.tiff", overwrite = TRUE)

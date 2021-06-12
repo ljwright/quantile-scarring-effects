@@ -13,7 +13,8 @@ rm(list = ls())
 load("Data/mice.Rdata")
 load("Data/df_analysis.Rdata")
 
-imp_long <- make_long(imp$Unem_6Months)
+imp_long <- make_long(imp$Unem_6Months) %>%
+  filter(imp == 1)
 rm(imp, id_obs, make_long)
 
 
@@ -31,14 +32,12 @@ all_specs <- map_dfr(1:length(covars),
                        map_dfr(enframe, value = "covars")) %>%
   select(-name) 
 
-get_sca <- function(covars, tau, imp){
+get_sca <- function(covars, tau){
   form <- glue("GHQ_W8_Likert ~ Unem_6Months + {covars}") %>%
     as.formula()
   
-  df <- imp_long %>%
-    filter(imp == !!imp)
-  
-  mod <- rq(form, tau = tau, data = df, weights = Survey_Weight_W8) %>%
+  mod <- rq(form, tau = tau, data = imp_long, 
+            weights = Survey_Weight_W8) %>%
     coef()
   
   mod[str_detect(names(mod), "^Unem")]
@@ -50,18 +49,15 @@ plan(multisession, workers = 4)
 tic()
 set.seed(2)
 sca_res <- all_specs %>%
-  mutate(imp = sample(1:28, n(), replace = TRUE)) %>%
   sample_n(20000) %>%
-  add_row(covars =  glue_collapse(covars, " + "),
-          imp = 1, .before = 1) %>%
+  add_row(covars =  glue_collapse(covars, " + "), .before = 1) %>%
   add_row(covars = str_subset(covars, "Status_W8", TRUE) %>%
-            glue_collapse(" + "),
-          imp = 2, .after = 1) %>%
+            glue_collapse(" + "), .after = 1) %>%
   distinct(covars, .keep_all = TRUE) %>%
   uncount(9, .id = "tau") %>%
   mutate(tau = tau/10) %>%
-  select(covars, tau, imp) %>%
-  mutate(coef = future_pmap_dbl(list(covars, tau, imp), 
+  select(covars, tau) %>%
+  mutate(coef = future_map2_dbl(covars, tau, 
                                 get_sca, .progress = TRUE)) %>%
   group_by(covars) %>%
   mutate(id = cur_group_id(), .before = 1) %>%
