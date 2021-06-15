@@ -256,20 +256,6 @@ qreg_coefs %>%
             "Marginal Effect",
             "quantile_sep")
 
-qreg_coefs %>%
-  filter(str_detect(term, "^Unem"),
-         str_detect(mod, "^Unem"),
-         sample == "mi") %>%
-  make_plot(mod_clean, "RColorBrewer::Set1", 
-            "Marginal Effect",
-            "quantile_unem") +
-  labs(color = "Months Unemployment",
-       fill = "Months Unemployment",
-       linetype = "Months Unemployment")
-ggsave("Images/quantile_unem.tiff", height = 9.9, 
-       compression = "lzw",
-       width = 21, units = "cm", dpi = 600)
-
 qreg_pred %>%
   filter(mod == "full", 
          sample == "mi") %>%
@@ -280,6 +266,28 @@ qreg_pred %>%
 ggsave("Images/quantile_pred.tiff", height = 9.9, 
        compression = "lzw",
        width = 21, units = "cm", dpi = 600)
+
+
+# Unemployment
+qreg_coefs %>%
+  filter(str_detect(term, "^Unem"),
+         str_detect(mod, "^Unem"),
+         sample == "mi") %>%
+  ggplot() +
+  aes(x = tau, y = beta, ymin = lci, ymax = uci,
+      color = mod_clean, fill = mod_clean, linetype = mod_clean) + 
+  geom_hline(yintercept = 0) +
+  geom_ribbon(color = NA, alpha = 0.2) +
+  geom_line() +
+  scale_x_continuous(breaks = 1:9/10) +
+  scale_color_viridis_d(option = "D", direction = -1) +
+  scale_fill_viridis_d(option = "D", direction = -1) +
+  labs(x = "Quantile", y = "Marginal Effect",
+       color = NULL, fill = NULL, linetype = NULL) +
+  theme_minimal() +
+  theme(legend.position = c(.15, .85))
+ggsave("Images/quantile_unem.tiff", compression = "lzw",
+       height = 9.9, width = 21, units = "cm", dpi = 600)
 
 
 # Tables
@@ -414,8 +422,8 @@ imp_long %>%
   filter(imp > 0) %>%
   summarise(sd = wtd.var(GHQ_W8_Likert, Survey_Weight_W8) %>%
               sqrt())
-0.75/6.41
-
+0.73/6.41
+3.72 /6.41
 
 # 6. Rename Files
 file.copy("Tables/descriptive_statistics.docx", "Paper/table_1.docx", overwrite = TRUE)
